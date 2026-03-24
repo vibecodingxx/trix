@@ -104,7 +104,6 @@ chmod +x /usr/bin/badvpn
 cat> /etc/systemd/system/badvpn.service << END
 [Unit]
 Description=BadVPN Gaming Support
-Documentation=https://t.me/lukavpn
 After=syslog.target network-online.target
 
 [Service]
