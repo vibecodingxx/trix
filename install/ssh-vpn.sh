@@ -99,21 +99,28 @@ mkdir -p /home/vps/public_html
 
 # install ssh badvpn for udp
 cd
-wget -O /usr/bin/badvpn-udpgw "https://raw.githubusercontent.com/vibecodingxx/trix/main/ssh/badvpn-udpgw64"
-chmod +x /usr/bin/badvpn-udpgw
-sed -i '$ i\screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7100 --max-clients 500' /etc/rc.local
-sed -i '$ i\screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7200 --max-clients 500' /etc/rc.local
-sed -i '$ i\screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 500' /etc/rc.local
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7100 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7200 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7400 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7500 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7600 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7700 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7800 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7900 --max-clients 500
+wget -O /usr/bin/badvpn "https://raw.githubusercontent.com/vibecodingxx/trix/main/ssh/badvpn-udpgw64"
+chmod +x /usr/bin/badvpn
+cat> /etc/systemd/system/badvpn.service << END
+[Unit]
+Description=BadVPN Gaming Support
+Documentation=https://t.me/lukavpn
+After=syslog.target network-online.target
 
+[Service]
+User=root
+NoNewPrivileges=true
+ExecStart=/usr/bin/badvpn --listen-addr 127.0.0.1:7300 --max-clients 500
+Restart=on-failure
+RestartPreventExitStatus=23
+LimitNPROC=10000
+LimitNOFILE=1000000
+
+[Install]
+WantedBy=multi-user.target
+END
+systemctl enable badvpn
+systemctl restart badvpn
 # // setting port ssh
 cd
 apt-get -y update
@@ -326,15 +333,6 @@ chown -R www-data:www-data /home/vps/public_html
 /etc/init.d/fail2ban restart
 /etc/init.d/vnstat restart
 /etc/init.d/stunnel4 restart
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7100 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7200 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7300 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7400 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7500 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7600 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7700 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7800 --max-clients 500
-screen -dmS badvpn badvpn-udpgw --listen-addr 127.0.0.1:7900 --max-clients 500
 history -c
 echo "unset HISTFILE" >> /etc/profile
 
