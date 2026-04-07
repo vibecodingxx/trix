@@ -216,9 +216,6 @@ accept = 2096
 connect = 127.0.0.1:2091
 END
 
-groupadd stunnel4
-useradd -r -g stunnel4 -s /usr/sbin/nologin stunnel4
-
 mkdir -p /var/run/stunnel4
 chown stunnel4:stunnel4 /var/run/stunnel4
 
@@ -337,6 +334,8 @@ chown -R www-data:www-data /home/vps/public_html
 history -c
 echo "unset HISTFILE" >> /etc/profile
 
+groupadd stunnel4
+useradd -r -g stunnel4 -s /usr/sbin/nologin stunnel4 
 # delete setup
 cd
 rm -f /root/key.pem
