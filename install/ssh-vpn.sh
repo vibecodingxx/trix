@@ -104,6 +104,7 @@ chmod +x /usr/bin/badvpn
 cat> /etc/systemd/system/badvpn.service << END
 [Unit]
 Description=BadVPN Gaming Support
+Documentation=https://t.me/weloveana
 After=syslog.target network-online.target
 
 [Service]
@@ -118,8 +119,9 @@ LimitNOFILE=1000000
 [Install]
 WantedBy=multi-user.target
 END
+systemctl daemon-reload
 systemctl enable badvpn
-systemctl restart badvpn
+systemctl start badvpn
 # // setting port ssh
 cd
 apt-get -y update
@@ -214,11 +216,11 @@ accept = 2096
 connect = 127.0.0.1:2091
 END
 
-groupadd stunnel
-useradd -r -g stunnel -s /usr/sbin/nologin stunnel
+groupadd stunnel4
+useradd -r -g stunnel4 -s /usr/sbin/nologin stunnel4
 
 mkdir -p /var/run/stunnel4
-chown stunnel:stunnel /var/run/stunnel4
+chown stunnel4:stunnel4 /var/run/stunnel4
 
 # make a certificate
 openssl genrsa -out key.pem 2048
@@ -308,7 +310,7 @@ echo "0 4 * * * root xp-xrayssh" >> /etc/crontab
 echo "50 4 * * * root clear-log" >> /etc/crontab
 echo "0 5 * * * root reboot" >> /etc/crontab
 echo "0 10 * * * root notyexpired" >> /etc/crontab
-echo "$((RANDOM % 60)) */6 * * * root infoserver" | tee -a /etc/crontab
+echo "$((RANDOM % 60)) */6 * * * root info" | tee -a /etc/crontab
 echo "$((RANDOM % 60)) 2,16 * * * root backup" | tee -a /etc/crontab
 
 # remove unnecessary files
