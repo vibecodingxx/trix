@@ -77,13 +77,10 @@ ln -fs /usr/share/zoneinfo/Asia/Kuala_Lumpur /etc/localtime
 
 # set locale
 sed -i 's/AcceptEnv/#AcceptEnv/g' /etc/ssh/sshd_config
-
-# install req packages
-#apt-get --reinstall --fix-missing install -y bzip2 gzip coreutils wget screen rsyslog iftop htop net-tools zip unzip wget net-tools curl nano sed screen gnupg gnupg1 bc apt-transport-https build-essential dirmngr libxml-parser-perl neofetch git lsof
 apt-get install -y \
 bzip2 gzip coreutils wget screen rsyslog iftop htop net-tools \
 zip unzip curl nano sed gnupg gnupg1 bc apt-transport-https \
-build-essential dirmngr libxml-parser-perl neofetch git lsof
+build-essential dirmngr libxml-parser-perl neofetch git lsof chrony iptables-persistent
 echo "clear" >> .profile
 echo "menu" >> .profile
 
@@ -94,7 +91,6 @@ rm /etc/nginx/sites-enabled/default
 rm /etc/nginx/sites-available/default
 wget -O /etc/nginx/nginx.conf "https://raw.githubusercontent.com/vibecodingxx/trix/main/others/nginx.conf"
 mkdir -p /home/vps/public_html
-#wget -O /etc/nginx/conf.d/vps.conf "https://raw.githubusercontent.com/vibecodingxx/trix/main/others/vps.conf"
 /etc/init.d/nginx restart
 
 # install ssh badvpn for udp
@@ -178,7 +174,7 @@ systemctl restart dropbear
 
 # setup old vnstat
 apt -y install build-essential libsqlite3-dev
-wget https://github.com/vibecodingxx/trix/main/vnstat-2.6.tar.gz
+wget https://raw.githubusercontent.com/vibecodingxx/trix/main/others/vnstat-2.6.tar.gz
 tar zxvf vnstat-2.6.tar.gz
 cd vnstat-2.6
 ./configure --prefix=/usr --sysconfdir=/etc && make && make install
