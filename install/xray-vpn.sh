@@ -1497,8 +1497,8 @@ chmod 755 /usr/local/bin/xray
 
 # end
 cd
-rm -f xray-vpn.sh
 mv /root/domain /usr/local/etc/xray/domain
 cp /usr/local/etc/xray/domain /etc/xray/domain
+rm -f xray-vpn.sh
 sleep 1
-clear;
+clear
