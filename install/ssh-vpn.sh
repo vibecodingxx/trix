@@ -95,7 +95,7 @@ mkdir -p /home/vps/public_html
 
 # install ssh badvpn for udp
 cd
-wget -O /usr/bin/badvpn "https://raw.githubusercontent.com/vibecodingxx/trix/main/ssh/badvpn-udpgw64"
+wget -O /usr/bin/badvpn "https://raw.githubusercontent.com/vibecodingxx/trix/main/others/badvpn-udpgw64"
 chmod +x /usr/bin/badvpn
 cat> /etc/systemd/system/badvpn.service << END
 [Unit]
@@ -225,7 +225,6 @@ sed -i 's/ENABLED=0/ENABLED=1/g' /etc/default/stunnel4
 systemctl start stunnel4
 /etc/init.d/stunnel4 restart
 
-#Install Lolcat
 apt install -y ruby figlet git && gem install lolcat && git clone https://github.com/xero/figlet-fonts /tmp/f && cp -r /tmp/f/* /usr/share/figlet/ && rm -rf /tmp/f lolcat.sh
 
 # install fail2ban
