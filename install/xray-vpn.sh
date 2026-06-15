@@ -17,9 +17,7 @@ domain=$(cat /root/domain)
 # install packages
 DEBIAN_FRONTEND=noninteractive apt-get install iptables iptables-persistent -y 
 apt install curl socat xz-utils wget apt-transport-https gnupg gnupg2 gnupg1 dnsutils lsb-release -y 
-apt install socat cron bash-completion ntpdate -y
-ntpdate pool.ntp.org
-apt -y install chrony
+apt install socat cron bash-completion chrony -y
 timedatectl set-ntp true
 systemctl enable chronyd && systemctl restart chronyd
 systemctl enable chrony && systemctl restart chrony
