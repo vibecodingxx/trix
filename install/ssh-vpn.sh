@@ -15,6 +15,8 @@ NET=$(ip -o $ANU -4 route show to default | awk '{print $5}');
 source /etc/os-release
 ver=$VERSION_ID
 
+DEBIAN_FRONTEND=noninteractive apt-get install iptables iptables-persistent -y
+
 # Detail Perusahaan / Certificate Info
 country="MY"                   # ISO country code
 state="Johor"               # State / Province
@@ -173,6 +175,8 @@ systemctl enable dropbear
 systemctl restart dropbear
 
 # setup old vnstat
+apt -y install vnstat
+/etc/init.d/vnstat restart
 apt -y install build-essential libsqlite3-dev
 wget https://raw.githubusercontent.com/vibecodingxx/trix/main/others/vnstat-2.6.tar.gz
 tar zxvf vnstat-2.6.tar.gz
@@ -335,4 +339,3 @@ rm -f /root/key.pem
 rm -f /root/cert.pem
 rm -f /root/ssh-vpn.sh
 clear
- 
