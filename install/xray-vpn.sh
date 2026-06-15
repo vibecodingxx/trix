@@ -235,7 +235,7 @@ cat> /usr/local/etc/xray/vless-tls.json << END
             "settings": {
                 "clients": [
                     {
-                        "id": "{uuid}",
+                        "id": "${uuid}",
                         "level": 0
 #vless-ws-tls
                     }
@@ -376,7 +376,7 @@ cat> /usr/local/etc/xray/vless-none.json << END
         "decryption": "none",
         "clients": [
           {
-            "id": "{uuid}"
+            "id": "${uuid}"
 #vless-ws-ntls
           }
         ]
@@ -514,7 +514,7 @@ cat> /usr/local/etc/xray/vmess-tls.json << END
             "settings": {
                 "clients": [
                     {
-                        "id": "{uuid}",
+                        "id": "${uuid}",
                         "alterId": 0,
                         "level": 0
 #vmess-ws-tls
@@ -654,7 +654,7 @@ cat> /usr/local/etc/xray/vmess-none.json << END
          "settings": {
             "clients": [
                {
-                 "id": "{uuid}",
+                 "id": "${uuid}",
                  "alterId": 0
 #vmess-ws-ntls
              }
@@ -803,7 +803,7 @@ cat> /usr/local/etc/xray/httpupgrade-tls.json << END
       "settings": {
         "clients": [
           {
-            "id": "{uuid}",
+            "id": "${uuid}",
             "level": 0
 #vless-httpupgrade-tls
           }
@@ -947,7 +947,7 @@ cat> /usr/local/etc/xray/httpupgrade-none.json << END
         "decryption": "none",
         "clients": [
           {
-            "id": "{uuid}"
+            "id": "${uuid}"
 #vless-httpupgrade-ntls
           }
         ]
