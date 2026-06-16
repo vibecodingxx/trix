@@ -1,91 +1,184 @@
-#!/bin/bash
-# =========================================
-# BBR Basic Tweak & Optimize
+#!/usr/bin/env bash
+# BBR basic tweak
 # Date: 2025-11-29
 # BY : XCODEX
-# =========================================
-clear
 
-# 1. Pastikan fail wujud dulu sebelum dibaca/ditulis! (Penyelamat Error)
-touch /etc/sysctl.conf
-touch /etc/security/limits.conf
-touch /etc/modules-load.d/modules.conf
+set -o pipefail
 
-Add_To_New_Line(){
-	if [ "$(tail -n1 "$1" 2>/dev/null | wc -l)" == "0" ]; then
-		echo "" >> "$1"
-	fi
-	echo "$2" >> "$1"
+green='\033[0;32m'
+red='\033[1;31m'
+yellow='\033[1;33m'
+bold_green='\033[32;1m'
+reset='\033[0m'
+
+log() {
+  printf '%b%s%b\n' "$green" "$*" "$reset"
 }
 
-Check_And_Add_Line(){
-    # Guna grep -qF lagi pro dan selamat untuk check fail
-	if ! grep -qF "$2" "$1" 2>/dev/null; then
-		Add_To_New_Line "$1" "$2"
-	fi
+warn() {
+  printf '%b%s%b\n' "$yellow" "$*" "$reset"
 }
 
-Install_BBR(){
-echo -e "\e[32;1m================================\e[0m"
-echo -e "\e[32;1mInstall TCP BBR...\e[0m"
-if [ -n "$(lsmod | grep bbr)" ];then
-    echo -e "\e[0;32mSuccesfully Installed TCP BBR.\e[0m"
-    echo -e "\e[32;1m================================\e[0m"
-    return 1
-fi
-
-echo -e "\e[0;32mstart installing TCP_BBR...\e[0m"
-modprobe tcp_bbr
-Check_And_Add_Line "/etc/modules-load.d/modules.conf" "tcp_bbr"
-Check_And_Add_Line "/etc/sysctl.conf" "net.core.default_qdisc = fq"
-Check_And_Add_Line "/etc/sysctl.conf" "net.ipv4.tcp_congestion_control = bbr"
-sysctl -p > /dev/null 2>&1
-
-if [ -n "$(sysctl net.ipv4.tcp_available_congestion_control | grep bbr)" ] && [ -n "$(sysctl net.ipv4.tcp_congestion_control | grep bbr)" ] && [ -n "$(lsmod | grep "tcp_bbr")" ];then
-	echo -e "\e[0;32mSuccess install TCP BBR.\e[0m"
-else
-	echo -e "\e[1;31mfailed install TCP_BBR.\e[0m"
-fi
-echo -e "\e[32;1m================================\e[0m"
+die() {
+  printf '%b%s%b\n' "$red" "$*" "$reset" >&2
+  exit 1
 }
 
-Optimize_Parameters(){
-echo -e "\e[32;1m================================\e[0m"
-echo -e "\e[32;1mOptimize Parameters...\e[0m"
-Check_And_Add_Line "/etc/security/limits.conf" "* soft nofile 51200"
-Check_And_Add_Line "/etc/security/limits.conf" "* hard nofile 51200"
-Check_And_Add_Line "/etc/security/limits.conf" "root soft nofile 51200"
-Check_And_Add_Line "/etc/security/limits.conf" "root hard nofile 51200"
-
-Check_And_Add_Line "/etc/sysctl.conf" "fs.file-max = 51200"
-Check_And_Add_Line "/etc/sysctl.conf" "net.core.rmem_max = 67108864"
-Check_And_Add_Line "/etc/sysctl.conf" "net.core.wmem_max = 67108864"
-Check_And_Add_Line "/etc/sysctl.conf" "net.core.netdev_max_backlog = 250000"
-Check_And_Add_Line "/etc/sysctl.conf" "net.core.somaxconn = 4096"
-Check_And_Add_Line "/etc/sysctl.conf" "net.ipv4.tcp_syncookies = 1"
-Check_And_Add_Line "/etc/sysctl.conf" "net.ipv4.tcp_tw_reuse = 1"
-Check_And_Add_Line "/etc/sysctl.conf" "net.ipv4.tcp_fin_timeout = 30"
-Check_And_Add_Line "/etc/sysctl.conf" "net.ipv4.tcp_keepalive_time = 1200"
-Check_And_Add_Line "/etc/sysctl.conf" "net.ipv4.ip_local_port_range = 10000 65000"
-Check_And_Add_Line "/etc/sysctl.conf" "net.ipv4.tcp_max_syn_backlog = 8192"
-Check_And_Add_Line "/etc/sysctl.conf" "net.ipv4.tcp_max_tw_buckets = 5000"
-Check_And_Add_Line "/etc/sysctl.conf" "net.ipv4.tcp_fastopen = 3"
-Check_And_Add_Line "/etc/sysctl.conf" "net.ipv4.tcp_mem = 25600 51200 102400"
-Check_And_Add_Line "/etc/sysctl.conf" "net.ipv4.tcp_rmem = 4096 87380 67108864"
-Check_And_Add_Line "/etc/sysctl.conf" "net.ipv4.tcp_wmem = 4096 65536 67108864"
-Check_And_Add_Line "/etc/sysctl.conf" "net.ipv4.tcp_mtu_probing = 1"
-
-# 2. Mesti Reload! Kalau tak bazir je tulis semua ni.
-if sysctl -p > /dev/null 2>&1; then
-	echo -e "\e[0;32mSuccesfully Optimize Parameters.\e[0m"
-else
-	echo -e "\e[1;31mFailed Optimize Parameters. Run sysctl -p manually for details.\e[0m"
-	return 1
-fi
-echo -e "\e[32;1m================================\e[0m"
+ensure_root() {
+  if [ "${EUID:-$(id -u)}" -ne 0 ]; then
+    die "Please run this script as root."
+  fi
 }
 
-Install_BBR
-Optimize_Parameters || exit 1
+ensure_file() {
+  local file="$1"
+  mkdir -p "$(dirname "$file")"
+  touch "$file"
+}
 
-rm -f /root/bbr.sh
+ensure_final_newline() {
+  local file="$1"
+
+  [ -s "$file" ] || return 0
+  if [ "$(tail -c 1 "$file" | wc -l)" -eq 0 ]; then
+    printf '\n' >> "$file"
+  fi
+}
+
+ensure_line() {
+  local file="$1"
+  local line="$2"
+
+  ensure_file "$file"
+  if ! grep -Fxq -- "$line" "$file"; then
+    ensure_final_newline "$file"
+    printf '%s\n' "$line" >> "$file"
+  fi
+}
+
+upsert_sysctl_conf() {
+  local key="$1"
+  local value="$2"
+  local file="/etc/sysctl.conf"
+  local tmp
+
+  ensure_file "$file"
+  tmp="$(mktemp)"
+
+  awk -v key="$key" -v value="$value" '
+    {
+      raw = $0
+      line = $0
+      sub(/^[[:space:]]*#?[[:space:]]*/, "", line)
+      split(line, parts, "=")
+      current_key = parts[1]
+      sub(/[[:space:]]+$/, "", current_key)
+
+      if (current_key == key) {
+        if (!done) {
+          print key " = " value
+          done = 1
+        }
+        next
+      }
+
+      print raw
+    }
+    END {
+      if (!done) {
+        print key " = " value
+      }
+    }
+  ' "$file" > "$tmp"
+
+  mv "$tmp" "$file"
+}
+
+apply_sysctl() {
+  local key="$1"
+  local value="$2"
+  local required="${3:-0}"
+
+  if sysctl -w "$key=$value" >/dev/null 2>&1; then
+    upsert_sysctl_conf "$key" "$value"
+    return 0
+  fi
+
+  if [ "$required" = "1" ]; then
+    die "Failed to apply sysctl: $key = $value"
+  fi
+
+  warn "Skipped unsupported sysctl: $key"
+  return 0
+}
+
+bbr_available() {
+  sysctl -n net.ipv4.tcp_available_congestion_control 2>/dev/null | grep -qw bbr
+}
+
+bbr_enabled() {
+  [ "$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null)" = "bbr" ]
+}
+
+install_bbr() {
+  printf '%b================================%b\n' "$bold_green" "$reset"
+  printf '%bInstall TCP BBR...%b\n' "$bold_green" "$reset"
+
+  modprobe tcp_bbr 2>/dev/null || true
+  ensure_line "/etc/modules-load.d/modules.conf" "tcp_bbr"
+
+  if ! bbr_available; then
+    die "TCP BBR is not available on this kernel."
+  fi
+
+  apply_sysctl "net.core.default_qdisc" "fq" 1
+  apply_sysctl "net.ipv4.tcp_congestion_control" "bbr" 1
+
+  if bbr_enabled; then
+    log "Success install TCP BBR."
+  else
+    die "Failed to enable TCP BBR."
+  fi
+
+  printf '%b================================%b\n' "$bold_green" "$reset"
+}
+
+optimize_parameters() {
+  printf '%b================================%b\n' "$bold_green" "$reset"
+  printf '%bOptimize Parameters...%b\n' "$bold_green" "$reset"
+
+  ensure_line "/etc/security/limits.conf" "* soft nofile 51200"
+  ensure_line "/etc/security/limits.conf" "* hard nofile 51200"
+  ensure_line "/etc/security/limits.conf" "root soft nofile 51200"
+  ensure_line "/etc/security/limits.conf" "root hard nofile 51200"
+
+  apply_sysctl "fs.file-max" "1000000"
+  apply_sysctl "net.core.rmem_max" "67108864"
+  apply_sysctl "net.core.wmem_max" "67108864"
+  apply_sysctl "net.core.netdev_max_backlog" "250000"
+  apply_sysctl "net.core.somaxconn" "4096"
+  apply_sysctl "net.ipv4.tcp_syncookies" "1"
+  apply_sysctl "net.ipv4.tcp_tw_reuse" "1"
+  apply_sysctl "net.ipv4.tcp_fin_timeout" "30"
+  apply_sysctl "net.ipv4.tcp_keepalive_time" "1200"
+  apply_sysctl "net.ipv4.ip_local_port_range" "10000 65000"
+  apply_sysctl "net.ipv4.tcp_max_syn_backlog" "8192"
+  apply_sysctl "net.ipv4.tcp_max_tw_buckets" "5000"
+  apply_sysctl "net.ipv4.tcp_fastopen" "3"
+  apply_sysctl "net.ipv4.tcp_mem" "25600 51200 102400"
+  apply_sysctl "net.ipv4.tcp_rmem" "4096 87380 67108864"
+  apply_sysctl "net.ipv4.tcp_wmem" "4096 65536 67108864"
+  apply_sysctl "net.ipv4.tcp_mtu_probing" "1"
+
+  log "Successfully optimized parameters."
+  printf '%b================================%b\n' "$bold_green" "$reset"
+}
+
+main() {
+  ensure_root
+  install_bbr
+  optimize_parameters
+  rm -f /root/bbr.sh
+}
+
+main "$@"
