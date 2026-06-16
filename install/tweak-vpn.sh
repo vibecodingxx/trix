@@ -27,62 +27,11 @@ sed -i '/\/swapfile/d' /etc/fstab
 echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
 sleep 1
 
-# -------------------------------
-cd /usr/local/bin
-#wget -O strt "https://raw.githubusercontent.com/vibecodingxx/trix/main/others/strt.sh"
-wget -O limit-speed "https://raw.githubusercontent.com/vibecodingxx/trix/main/others/limit-speed.sh"
-chmod +x limit-speed
-cd
-
 # 3️⃣ Tambah repository rasmi Ookla
 curl -s https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | bash
 
 # 4️⃣ Pasang Speedtest CLI
 apt-get install speedtest -y
-
-# 5️⃣ Jalankan ujian speed
-#speedtest
-
-#Buat script helper systemd
-apt-get install wondershaper -y
-cat <<'EOF' > /usr/local/bin/limit-speed-apply.sh
-#!/bin/bash
-LIMIT_FILE="/home/limit"
-
-if [[ -f "$LIMIT_FILE" ]] && [[ -s "$LIMIT_FILE" ]]; then
-    read NIC DOWN UP < "$LIMIT_FILE"
-    wondershaper -c -a "$NIC" 2>/dev/null
-    wondershaper -a "$NIC" -d $((DOWN*1000)) -u $((UP*1000))
-fi
-EOF
-
-chmod +x /usr/local/bin/limit-speed-apply.sh
-
-#Buat systemd service untuk auto-apply limit saat boot
-cat <<EOF > /etc/systemd/system/limit-speed.service
-[Unit]
-Description=Apply bandwidth limit with wondershaper
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=oneshot
-ExecStart=/usr/local/bin/limit-speed-apply.sh
-RemainAfterExit=yes
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# start limit speed boot
-systemctl daemon-reload
-systemctl start limit-speed.service
-#systemctl status limit-speed.service
-systemctl enable limit-speed.service
-
-#done
-rm -f set-br.sh
-rm -f rclone.zip
 
 wget -O bbr "https://raw.githubusercontent.com/vibecodingxx/trix/main/tweak/bbr.sh" && chmod +x bbr && ./bbr
 
