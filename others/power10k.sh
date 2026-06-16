@@ -92,38 +92,17 @@ normalize_domain() {
 
 detect_domain() {
   local domain=""
-  local file
-  local candidates=(
-    /etc/xray/domain
-    /usr/local/etc/xray/domain
-    /etc/v2ray/domain
-    /usr/local/etc/v2ray/domain
-    /root/domain
-    /root/backup/xray/domain
-    /etc/domain
-  )
 
   if [ -n "${P10K_DOMAIN:-}" ]; then
     normalize_domain "$P10K_DOMAIN"
     return 0
   fi
 
-  for file in "${candidates[@]}"; do
-    domain="$(extract_domain_from_file "$file" || true)"
-    if [ -n "$domain" ]; then
-      normalize_domain "$domain"
-      return 0
-    fi
-  done
-
-  while IFS= read -r -d '' file; do
-    domain="$(extract_domain_from_file "$file" || true)"
-    if [ -n "$domain" ]; then
-      normalize_domain "$domain"
-      return 0
-    fi
-  done < <(find /etc/xray /usr/local/etc/xray /etc/v2ray /usr/local/etc/v2ray \
-    -maxdepth 2 -type f \( -name '*.json' -o -name '*.conf' -o -name '*.toml' \) -print0 2>/dev/null)
+  domain="$(extract_domain_from_file /etc/xray/domain || true)"
+  if [ -n "$domain" ]; then
+    normalize_domain "$domain"
+    return 0
+  fi
 
   return 1
 }
