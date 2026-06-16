@@ -219,13 +219,6 @@ ensure_powerlevel10k() {
 write_zshrc() {
   backup_file "$HOME_DIR/.zshrc"
   cat > "$HOME_DIR/.zshrc" <<'ZSHRC'
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
-if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
-  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
-fi
-
 # ~/.zshrc: executed by zsh for interactive shells.
 
 export PATH="$HOME/.local/bin:$PATH"
@@ -242,6 +235,26 @@ source "$HOME/powerlevel10k/powerlevel10k.zsh-theme"
 
 [[ ! -f "$HOME/.p10k.zsh" ]] || source "$HOME/.p10k.zsh"
 ZSHRC
+}
+
+write_zlogin() {
+  backup_file "$HOME_DIR/.zlogin"
+  cat > "$HOME_DIR/.zlogin" <<'ZLOGIN'
+# ~/.zlogin: executed by zsh login shells after ~/.zshrc.
+
+if [[ -o interactive && -z "${P10K_MENU_SHOWN:-}" ]]; then
+  export P10K_MENU_SHOWN=1
+  case "${P10K_AUTO_MENU:-1}" in
+    0|false|FALSE|no|NO|off|OFF) ;;
+    *)
+      if [[ -x /usr/local/bin/menu ]]; then
+        print -r -- "Loading menu..."
+        /usr/bin/env bash /usr/local/bin/menu
+      fi
+      ;;
+  esac
+fi
+ZLOGIN
 }
 
 decode_base64() {
@@ -1842,26 +1855,81 @@ cmludCBhIHdhcm5pbmcgd2hlbiBkZXRlY3RpbmcgY29uc29sZSBvdXRwdXQgZHVyaW5nCiAgIyAg
 ICAgICAgICAgICAgenNoIGluaXRpYWxpemF0aW9uLiBDaG9vc2UgdGhpcyBpZiB5b3UndmUgbmV2
 ZXIgdHJpZWQgaW5zdGFudCBwcm9tcHQsIGhhdmVuJ3QKICAjICAgICAgICAgICAgICBzZWVuIHRo
 ZSB3YXJuaW5nLCBvciBpZiB5b3UgYXJlIHVuc3VyZSB3aGF0IHRoaXMgYWxsIG1lYW5zLgogIHR5
-cGVzZXQgLWcgUE9XRVJMRVZFTDlLX0lOU1RBTlRfUFJPTVBUPXZlcmJvc2UKCiAgIyBIb3QgcmVs
-b2FkIGFsbG93cyB5b3UgdG8gY2hhbmdlIFBPV0VSTEVWRUw5SyBvcHRpb25zIGFmdGVyIFBvd2Vy
-bGV2ZWwxMGsgaGFzIGJlZW4gaW5pdGlhbGl6ZWQuCiAgIyBGb3IgZXhhbXBsZSwgeW91IGNhbiB0
-eXBlIFBPV0VSTEVWRUw5S19CQUNLR1JPVU5EPXJlZCBhbmQgc2VlIHlvdXIgcHJvbXB0IHR1cm4g
-cmVkLiBIb3QgcmVsb2FkCiAgIyBjYW4gc2xvdyBkb3duIHByb21wdCBieSAxLTIgbWlsbGlzZWNv
-bmRzLCBzbyBpdCdzIGJldHRlciB0byBrZWVwIGl0IHR1cm5lZCBvZmYgdW5sZXNzIHlvdQogICMg
-cmVhbGx5IG5lZWQgaXQuCiAgdHlwZXNldCAtZyBQT1dFUkxFVkVMOUtfRElTQUJMRV9IT1RfUkVM
-T0FEPXRydWUKCiAgIyBJZiBwMTBrIGlzIGFscmVhZHkgbG9hZGVkLCByZWxvYWQgY29uZmlndXJh
-dGlvbi4KICAjIFRoaXMgd29ya3MgZXZlbiB3aXRoIFBPV0VSTEVWRUw5S19ESVNBQkxFX0hPVF9S
-RUxPQUQ9dHJ1ZS4KICAoKCAhICQrZnVuY3Rpb25zW3AxMGtdICkpIHx8IHAxMGsgcmVsb2FkCn0K
-CiMgVGVsbCBgcDEwayBjb25maWd1cmVgIHdoaWNoIGZpbGUgaXQgc2hvdWxkIG92ZXJ3cml0ZS4K
-dHlwZXNldCAtZyBQT1dFUkxFVkVMOUtfQ09ORklHX0ZJTEU9JHskeyglKTotJXh9OmF9CgooKCAk
-eyNwMTBrX2NvbmZpZ19vcHRzfSApKSAmJiBzZXRvcHQgJHtwMTBrX2NvbmZpZ19vcHRzW0BdfQon
-YnVpbHRpbicgJ3Vuc2V0JyAncDEwa19jb25maWdfb3B0cycK
+cGVzZXQgLWcgUE9XRVJMRVZFTDlLX0lOU1RBTlRfUFJPTVBUPW9mZgoKICAjIEhvdCByZWxvYWQg
+YWxsb3dzIHlvdSB0byBjaGFuZ2UgUE9XRVJMRVZFTDlLIG9wdGlvbnMgYWZ0ZXIgUG93ZXJsZXZl
+bDEwayBoYXMgYmVlbiBpbml0aWFsaXplZC4KICAjIEZvciBleGFtcGxlLCB5b3UgY2FuIHR5cGUg
+UE9XRVJMRVZFTDlLX0JBQ0tHUk9VTkQ9cmVkIGFuZCBzZWUgeW91ciBwcm9tcHQgdHVybiByZWQu
+IEhvdCByZWxvYWQKICAjIGNhbiBzbG93IGRvd24gcHJvbXB0IGJ5IDEtMiBtaWxsaXNlY29uZHMs
+IHNvIGl0J3MgYmV0dGVyIHRvIGtlZXAgaXQgdHVybmVkIG9mZiB1bmxlc3MgeW91CiAgIyByZWFs
+bHkgbmVlZCBpdC4KICB0eXBlc2V0IC1nIFBPV0VSTEVWRUw5S19ESVNBQkxFX0hPVF9SRUxPQUQ9
+dHJ1ZQoKICAjIElmIHAxMGsgaXMgYWxyZWFkeSBsb2FkZWQsIHJlbG9hZCBjb25maWd1cmF0aW9u
+LgogICMgVGhpcyB3b3JrcyBldmVuIHdpdGggUE9XRVJMRVZFTDlLX0RJU0FCTEVfSE9UX1JFTE9B
+RD10cnVlLgogICgoICEgJCtmdW5jdGlvbnNbcDEwa10gKSkgfHwgcDEwayByZWxvYWQKfQoKIyBU
+ZWxsIGBwMTBrIGNvbmZpZ3VyZWAgd2hpY2ggZmlsZSBpdCBzaG91bGQgb3ZlcndyaXRlLgp0eXBl
+c2V0IC1nIFBPV0VSTEVWRUw5S19DT05GSUdfRklMRT0keyR7KCUpOi0leH06YX0KCigoICR7I3Ax
+MGtfY29uZmlnX29wdHN9ICkpICYmIHNldG9wdCAke3AxMGtfY29uZmlnX29wdHNbQF19CididWls
+dGluJyAndW5zZXQnICdwMTBrX2NvbmZpZ19vcHRzJwo=
 P10K_CONFIG_B64
+}
+
+patch_menu_script() {
+  local menu_file="/usr/local/bin/menu"
+  local tmp=""
+  local patched=""
+
+  if [ ! -f "$menu_file" ]; then
+    log "Menu script not found at $menu_file; menu patch skipped"
+    return
+  fi
+
+  tmp="$(mktemp)"
+  patched="$(mktemp)"
+  cp "$menu_file" "$tmp"
+
+  if ! grep -q 'curl_quick()' "$tmp"; then
+    awk '
+      { print }
+      /^domain=\$\(cat \/usr\/local\/etc\/xray\/domain\)/ {
+        print "curl_quick() {"
+        print "    curl -fsS --connect-timeout 1 --max-time 2 \"\$@\" 2>/dev/null"
+        print "}"
+      }
+    ' "$tmp" > "$patched"
+    mv "$patched" "$tmp"
+  fi
+
+  awk '
+    /^IPVPS=\$\(curl -s ipv4\.icanhazip\.com \|\| curl -s ipinfo\.io\/ip \|\| curl -s ifconfig\.me\)$/ {
+      print "IPVPS=$(curl_quick https://ipv4.icanhazip.com || curl_quick https://ipinfo.io/ip || curl_quick https://ifconfig.me || true)"
+      print "IPVPS=\"${IPVPS//$'\''\\n'\''/}\""
+      print "[ -n \"$IPVPS\" ] || IPVPS=\"N/A\""
+      next
+    }
+    /^IPV6=\$\(curl -s -6 ipv6\.icanhazip\.com\)$/ {
+      print "IPV6=$(curl_quick -6 https://ipv6.icanhazip.com || true)"
+      print "IPV6=\"${IPV6//$'\''\\n'\''/}\""
+      next
+    }
+    { print }
+  ' "$tmp" > "$patched"
+  mv "$patched" "$tmp"
+
+  if cmp -s "$menu_file" "$tmp"; then
+    log "Menu script already patched"
+    rm -f "$tmp" "$patched"
+    return
+  fi
+
+  backup_file "$menu_file"
+  run_privileged cp "$tmp" "$menu_file"
+  run_privileged chmod +x "$menu_file"
+  rm -f "$tmp" "$patched"
+  log "Patched menu script curl timeouts in $menu_file"
 }
 
 fix_ownership() {
   if [ "$(id -u)" -eq 0 ]; then
-    chown -R "$TARGET_USER:$TARGET_GROUP" "$HOME_DIR/.zshrc" "$HOME_DIR/.p10k.zsh" "$HOME_DIR/powerlevel10k"
+    chown -R "$TARGET_USER:$TARGET_GROUP" "$HOME_DIR/.zshrc" "$HOME_DIR/.zlogin" "$HOME_DIR/.p10k.zsh" "$HOME_DIR/powerlevel10k"
   fi
 }
 
@@ -1911,7 +1979,7 @@ restart_into_zsh() {
   fi
 
   log "Restarting current shell with: exec zsh"
-  exec "$ZSH_BIN" -l
+  exec "$ZSH_BIN" -il
 }
 
 main() {
@@ -1922,13 +1990,15 @@ main() {
   install_packages
   ensure_powerlevel10k
   write_zshrc
+  write_zlogin
   write_p10k_config
+  patch_menu_script
   fix_ownership
   set_default_shell
   set_hostname_from_domain
 
   log "Done. Restart with: exec zsh"
-  log "Config installed: $HOME_DIR/.zshrc and $HOME_DIR/.p10k.zsh"
+  log "Config installed: $HOME_DIR/.zshrc, $HOME_DIR/.zlogin and $HOME_DIR/.p10k.zsh"
   restart_into_zsh
 }
 
